@@ -1,0 +1,17 @@
+/*
+*		Scheduling
+*/
+
+runIn(seconds, method) // one time
+schedule(Date, method) // one time
+schedule(timestamp, method) // one time
+schedule(timeString, method) // daily at time
+schedule(cron, method) // follow schedule
+
+runOnce(Date, method)
+runHourly(Date, method)
+runDaily(Date, method)
+
+
+1 minute is the finest grain we really support.
+We will try runIn(6, method), but anything less than a minute is not guaranteed.
