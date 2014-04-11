@@ -1,0 +1,208 @@
+class ExampleREST { // Remove this line before pasting into the SmartThings IDE
+
+/**
+ *  Title: ExampleREST
+ * 	Description: 
+ *
+ *  Author: steve
+ *  Date: 4/11/14
+ */
+
+	mappings {
+		path("someEndpoint/:paramValue") {
+			action: [
+				GET   : "someMethodToHandleGET",
+				PUT   : "someMethodToHandlePUT",
+				POST  : "someMethodToHandlePOST",
+				DELETE: "someMethodToHandleDELETE",
+				HEAD  : "someMethodToHandleHEAD"
+			]
+		}
+	}
+
+	preferences {
+		/*
+		*		a series of pages is called a flow
+		*		nextPage:"pageName" will put a 'Next' button in the navigation bar and will take the user the the specified page when tapped
+		*		install:true will put a 'Done' button in the navigation bar and will install the SmartApp when the user taps it
+		*		uninstall:true will put a red 'Uninstall' button at the bottom of the page to allow users to uninstall your SmartApp
+		*		label elements will allow the user to name your SmartApp. It's a good idea to allow this
+		*
+			*	We allow you to specify which page these settings are on so you have more control over your flow.
+			*	If you have a completely linear flow, you'll probably want install:true on the last page.
+			* If you have all of your necessary settings on the first page and all of your optional settings on the second page, you probably want your install:true on the first page.
+		*/
+
+		/* static pages */
+		page(name: "firstPage", title: "My First Page", nextPage: "secondPage", uninstall: true) {
+			section("Hit next to go to the second page") {
+				label(title: "Label this SmartApp", required: false, defaultValue: "")
+			}
+			section {
+				input(name: "numberOfDesiredPages", title: "I want this many pages", type: "enum", style: "segmented", options: ["Two", "Three"], defaultValue: "Two")
+			}
+		}
+
+		/* dynamic pages only require a name here, but you must declare a method secondPage() that returns a dynamicPage */
+		page(name: "secondPage")
+		page(name: "thirdPage")
+	}
+
+	def secondPage() {
+
+		/*
+		*		name must match name from the preferences block, which also matches this method name
+		*		the benefit of a dynamicPage is the ability to interrogate settings to determine what to display
+		*/
+
+		def wantsThreePages = numberOfDesiredPages == "Three"
+
+		dynamicPage(name: "secondPage", title: "My Second Page", install: true) {
+			// install and uninstall are managed by you now because you may want your installation logic at the last page of your flow
+
+			if (wantsThreePages) {
+				section("This is an href. It takes you to another page") {
+					href(name: "toPageThree", title: "Go To Page Three", page: "thirdPage")
+				}
+			} else {
+				section {
+					paragraph "Looks like you've hit the end of the road"
+				}
+			}
+		}
+	}
+
+	def thirdPage() {
+
+		/* dynamic pages don't have to be dynamic. They can always return static information, but you still have to use dynamicPage in this case */
+
+		dynamicPage(name: "firstPage", title: "Well Done!", install: true, uninstall: true) {
+			section("You made it to the end") {
+				paragraph "go ahead an install"
+			}
+		}
+	}
+
+// ========================================================
+// URL Builders
+// ========================================================
+
+	private urlPathWithKeyValueParams() {
+		"${baseURL()}/api/smartapps/installations/${app.id}/someEndpoint?access_token=${getMyAccessToken()}"
+	}
+
+	private urlWithInlineToken(specifiedInMappings) {
+		"${baseURL()}/api/token/${getMyAccessToken()}/smartapps/installations/${app.id}/someEndpoint"
+	}
+
+	private urlPreferred(specifiedInMappings) { // my preferred way
+		"${baseURL()}/api/t/${getMyAccessToken()}/s/${app.id}/someEndpoint"
+	}
+
+	private baseURL() {
+		"https://graph.api.smartthings.com"
+	}
+
+// ========================================================
+// Endpoint Methods
+// ========================================================
+
+	def someMethodToHandleGET() {
+		if (renderHTML) {
+			def html = "<!DOCTYPE html><body>Some HTML</body>"
+			render status: 200, contentType: 'text/html', data: html
+		} else {
+			// return some JSON
+			return [foo: "bar"]
+		}
+	}
+
+	def someMethodToHandlePUT() {
+		render([status: 204, data: " "])
+	}
+
+	def someMethodToHandlePOST() {
+		render([status: 204, data: " "])
+	}
+
+	def someMethodToHandleDELETE() {
+		httpError(404, "Don't Delete ME!!!")
+	}
+
+	def someMethodToHandleHEAD() {
+		// TODO: handle HEAD request
+	}
+
+// ========================================================
+// Make REST calls
+// ========================================================
+
+	/* all of these work pretty much the same way from what I can tell
+	* 	httpGET
+	* 	httpPUT
+	* 	httpPOST
+	* 	httpDELETE
+	*/
+
+	def GET() {
+		log.debug getJsonFromUrl("some/url")
+	}
+
+	Map getJsonFromUrl(String url) {
+
+		def jsonString
+
+		httpGet(uri: url) { resp ->
+			jsonString = resp.data.toString()
+		}
+
+		return getJsonFromText(jsonString)
+	}
+
+	Map getJsonFromText(String jsonString) {
+		return jsonString.split("&").inject([:]) { c, it ->
+			def parts = it.split('=')
+			def k = parts[0]
+			def v = parts[1]
+			c[k] = v
+			return c
+		}
+	}
+
+// ========================================================
+// Access Token
+// ========================================================
+
+	private getMyAccessToken() {
+/* 	createAccessToken() will generate a token and place it in state.accessToken
+*		You must have enabled OAuth from the App Settings screen before createAccessToken() will work. Likewise, you must have OAuth enabled to use the token
+* 	atomicState is your state object but atomic. If you need to place something in state and read it out immediately, use atomicState */
+		return atomicState.accessToken ?: createAccessToken()
+	}
+
+// ========================================================
+// Handlers
+// ========================================================
+
+
+	def installed() {
+		log.debug "Installed with settings: ${settings}"
+
+		initialize()
+	}
+
+	def updated() {
+		log.debug "Updated with settings: ${settings}"
+
+		unsubscribe()
+		initialize()
+	}
+
+	def initialize() {
+		// TODO: subscribe to attributes, devices, locations, etc.
+	}
+
+// TODO: implement event handlers
+
+
+} // Remove this line before pasting into the SmartThings IDE
