@@ -1,0 +1,17 @@
+The SmartThings open platform allows you to control things in your home by writing your own SmartApps and DeviceTypes. This session will focus on some of the more advanced techniques used by people building the platform; sort of an insider's "tricks of the trade" session. There will be a lot of code in this session so a moderate understanding of SmartApp development is expected. Based on general interest, we will go in-depth on some of the following topics:
+
+- SmartApp Preferences / UX
+	+ Variations of the many different elements (inputs and otherwise)
+	+ Paginated preferences
+
+- Child SmartApps / DeviceTypes
+	+ CRUD children
+	+ Interacting with a parent
+
+- OAuth / REST
+
+- Events
+
+- Scheduling
+
+- DeviceTypes (but not the parse method)
