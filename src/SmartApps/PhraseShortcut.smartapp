@@ -1,0 +1,196 @@
+class PhraseShortcut { // Remove this line before pasting into the SmartThings IDE
+
+/**
+ *  Title: Phrase Shortcut
+ * 	Description:
+ *
+ *  Author: steve
+ *  Date: 4/9/14
+ */
+
+	// ========================================================
+	// Mappings
+	// ========================================================
+
+	mappings {
+		path("/getHTML/:phraseName") {
+			action: [
+				GET: "getHTML",
+			]
+		}
+		path("/executePhrase/:phraseName") {
+			action: [
+				GET: "executePhrase",
+			]
+		}
+	}
+
+	// ========================================================
+	// Pages / Preferences
+	// ========================================================
+
+	preferences {
+		page(name: "firstPage")
+	}
+
+	def firstPage() {
+		dynamicPage(name: "firstPage", title: "My Page", install: true, uninstall: true) {
+			section {
+				paragraph "Don't forget to hit 'Done'. This won't work if you don't :)"
+			}
+
+			section {
+				location.helloHome.getPhrases().label.each { phraseName ->
+					phraseHref(phraseName)
+				}
+			}
+		}
+	}
+
+	private void phraseHref(phraseName) {
+		href(
+			name: "phrase",
+			title: phraseName,
+			description: null,
+			required: false,
+			multiple: false,
+			url: phraseUrl(phraseName),
+			style: "external"
+		)
+	}
+
+	// ========================================================
+	// URL Builders
+	// ========================================================
+
+
+	private phraseUrl(phraseName) {
+		def encodedPhrase = URLEncoder.encode(phraseName)
+		def url = "${getServerUrl()}/api/t/${getMyAccessToken()}/s/${app.id}/getHTML/${encodedPhrase}"
+		log.debug url
+		return url
+	}
+
+	private phraseExecutionUrl(phraseName) {
+		def encodedPhrase = URLEncoder.encode(phraseName)
+		def url = "${getServerUrl()}/api/t/${getMyAccessToken()}/s/${app.id}/executePhrase/${encodedPhrase}"
+		log.debug url
+		return url
+	}
+
+	private getServerUrl() { "https://graph.api.smartthings.com" }
+
+	private getMyAccessToken() {
+
+		if (!atomicState.accessToken) {
+			return createAccessToken()
+		}
+
+		return atomicState.accessToken
+	}
+
+	// ========================================================
+	// REST / HTML
+	// ========================================================
+
+
+	def executePhrase() {
+
+		def phrase = params.phraseName
+
+		if (location.helloHome.getPhrases().label.contains(phrase)) {
+			log.debug "about to execute phrase: ${phrase}"
+			location.helloHome.execute(phrase)
+			render status: 200, contentType: 'text/html', data: successHTML(phrase)
+		} else {
+			httpError(404, "Phrase not found")
+		}
+	}
+
+	def getHTML() {
+		def html = """
+	<!DOCTYPE html>
+<head>
+	<meta charset="utf-8">
+	<title>Follow The Link</title>
+
+	<meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, user-scalable=no, maximum-scale=1, minimum-scale=1" />
+
+	<link rel="apple-touch-icon" href="http://f.cl.ly/items/3N0B3j0B0n0V052W3a0a/android-app-icon-1.png">
+
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+</head>
+<body>
+	<ol>
+		<li>Follow the link below</li>
+			<ul>
+				<li>Your phrase will execute</li>
+				<li>The SmartThings app will open</li>
+			</ul>
+		<li>Reopen Mobile Safari</li>
+	</ol>
+	<div>
+		<a href="${phraseExecutionUrl(params.phraseName)}">Follow this link then reopen Safari</a>
+	</div>
+</body>
+	"""
+
+		render status: 200, contentType: 'text/html', data: html
+	}
+
+	def successHTML(phrase) {
+		return """
+<!DOCTYPE html>
+<head>
+	<meta charset="utf-8">
+	<title>${phrase}</title>
+
+	<meta name="viewport" content="target-densitydpi=device-dpi, width=device-width, user-scalable=no, maximum-scale=1, minimum-scale=1" />
+
+	<link rel="apple-touch-icon" href="http://f.cl.ly/items/3N0B3j0B0n0V052W3a0a/android-app-icon-1.png">
+
+	<meta name="apple-mobile-web-app-capable" content="yes">
+	<meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+</head>
+<body>
+
+	<h1>1.<img src="http://f.cl.ly/items/302e2j1V2g1c020T1J30/share_button.png"></h1>
+	<h1>2.<img src="http://f.cl.ly/items/3W2v0y3G0b1M2q2R3g0I/Screen%20Shot%202014-04-11%20at%2010.59.39%20AM.png"></h1>
+
+	<script>
+		window.onload=function(){
+			window.location = "smartthings://smartapp/${app.id}"
+		};
+	</script>
+</body>
+	"""
+	}
+
+	// ========================================================
+	// Handlers / Unused
+	// ========================================================
+
+
+	def installed() {
+		log.debug "Installed with settings: ${settings}"
+
+		initialize()
+	}
+
+	def updated() {
+		log.debug "Updated with settings: ${settings}"
+
+		unsubscribe()
+		initialize()
+	}
+
+	def initialize() {
+		// TODO: subscribe to attributes, devices, locations, etc.
+	}
+
+// TODO: implement event handlers
+
+
+} // Remove this line before pasting into the SmartThings IDE
