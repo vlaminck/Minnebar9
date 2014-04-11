@@ -8,9 +8,9 @@ class PhraseShortcut { // Remove this line before pasting into the SmartThings I
  *  Date: 4/9/14
  */
 
-	// ========================================================
-	// Mappings
-	// ========================================================
+// ========================================================
+// URL Mappings
+// ========================================================
 
 	mappings {
 		path("/getHTML/:phraseName") {
@@ -25,83 +25,90 @@ class PhraseShortcut { // Remove this line before pasting into the SmartThings I
 		}
 	}
 
-	// ========================================================
-	// Pages / Preferences
-	// ========================================================
+// ========================================================
+// Pages / Preferences
+// ========================================================
 
 	preferences {
 		page(name: "firstPage")
 	}
 
 	def firstPage() {
-		dynamicPage(name: "firstPage", title: "My Page", install: true, uninstall: true) {
-			section {
-				paragraph "Don't forget to hit 'Done'. This won't work if you don't :)"
-			}
 
-			section {
-				location.helloHome.getPhrases().label.each { phraseName ->
-					phraseHref(phraseName)
+		def appIsInstalled = app.installationState == "COMPLETE"
+
+		dynamicPage(name: "firstPage", title: "Hello Home Shortcuts", install: true, uninstall: true) {
+
+			if (appIsInstalled) {
+
+				section("Which phrase would you like to create a shortcut for?") {
+					getHelloHomePhrases().each { phrase ->
+						href(name: phrase, title: phrase, description: null, url: phraseSetupUrl(phrase), style: "external")
+					}
 				}
+
+			} else {
+
+				section("Very Important") {
+					paragraph "Press done to install the app"
+					paragraph "Nothing in this app will work if you don't :)"
+				}
+
 			}
 		}
 	}
 
-	private void phraseHref(phraseName) {
-		href(
-			name: "phrase",
-			title: phraseName,
-			description: null,
-			required: false,
-			multiple: false,
-			url: phraseUrl(phraseName),
-			style: "external"
-		)
+// ========================================================
+// Hello Home Phrases
+// ========================================================
+
+
+	private getHelloHomePhrases() { // returns a list of strings
+		location.helloHome.getPhrases().label
 	}
 
-	// ========================================================
-	// URL Builders
-	// ========================================================
+	private executeHelloHomePhrase(phrase) {
+		location.helloHome.execute(phrase)
+	}
 
+// ========================================================
+// URL Builders
+// ========================================================
 
-	private phraseUrl(phraseName) {
-		def encodedPhrase = URLEncoder.encode(phraseName)
-		def url = "${getServerUrl()}/api/t/${getMyAccessToken()}/s/${app.id}/getHTML/${encodedPhrase}"
-		log.debug url
-		return url
+	private phraseSetupUrl(phrase) {
+		def encodedPhrase = URLEncoder.encode(phrase)
+		return "${serverUrl()}/api/t/${getMyAccessToken()}/s/${app.id}/getHTML/${encodedPhrase}"
 	}
 
 	private phraseExecutionUrl(phraseName) {
 		def encodedPhrase = URLEncoder.encode(phraseName)
-		def url = "${getServerUrl()}/api/t/${getMyAccessToken()}/s/${app.id}/executePhrase/${encodedPhrase}"
-		log.debug url
-		return url
+		return "${serverUrl()}/api/t/${getMyAccessToken()}/s/${app.id}/executePhrase/${encodedPhrase}"
 	}
 
-	private getServerUrl() { "https://graph.api.smartthings.com" }
+	private serverUrl() { "https://graph.api.smartthings.com" }
 
 	private getMyAccessToken() {
-
-		if (!atomicState.accessToken) {
-			return createAccessToken()
-		}
-
-		return atomicState.accessToken
+/* 	createAccessToken() will generate a token and place it in state.accessToken
+*		You must have enabled OAuth from the App Settings screen before createAccessToken() will work. Likewise, you must have OAuth enabled to use the token
+* 	atomicState is your state object but atomic. If you need to place something in state and read it out immediately, use atomicState */
+		return atomicState.accessToken ?: createAccessToken()
 	}
 
-	// ========================================================
-	// REST / HTML
-	// ========================================================
+// ========================================================
+// REST / HTML
+// ========================================================
 
 
 	def executePhrase() {
 
 		def phrase = params.phraseName
 
-		if (location.helloHome.getPhrases().label.contains(phrase)) {
+		if (getHelloHomePhrases().contains(phrase)) {
 			log.debug "about to execute phrase: ${phrase}"
-			location.helloHome.execute(phrase)
+
+			executeHelloHomePhrase(phrase)
 			render status: 200, contentType: 'text/html', data: successHTML(phrase)
+
 		} else {
 			httpError(404, "Phrase not found")
 		}
@@ -139,7 +146,15 @@ class PhraseShortcut { // Remove this line before pasting into the SmartThings I
 		render status: 200, contentType: 'text/html', data: html
 	}
 
+
 	def successHTML(phrase) {
+
+/* 	the iOS app will respond to smartthings://smartapp/${app.id}
+ * 	however, it will not open the specified SmartApp
+ * 	smartthings:// will log the user out so don't do that */
+
+		def openSmartThings = "smartthings://smartapp/${app.id}"
+
 		return """
 <!DOCTYPE html>
 <head>
@@ -161,16 +176,16 @@ class PhraseShortcut { // Remove this line before pasting into the SmartThings I
 
 	<script>
 		window.onload=function(){
-			window.location = "smartthings://smartapp/${app.id}"
+			window.location = "${smartThings}"
 		};
 	</script>
 </body>
 	"""
 	}
 
-	// ========================================================
-	// Handlers / Unused
-	// ========================================================
+// ========================================================
+// Handlers / Unused
+// ========================================================
 
 
 	def installed() {
