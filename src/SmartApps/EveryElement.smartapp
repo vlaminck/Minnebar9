@@ -117,7 +117,14 @@ def inputPage() {
 def appPage() {
 	dynamicPage(name: "appPage", title: "Every 'app' type") {
 		section("app") {
-			app(name: "app", title: "required:false, multiple:false", required: false, multiple: false, namespace: "Steve", appName: "Child SmartApp")
+			app(
+				name: "app",
+				title: "required:false, multiple:false",
+				required: false,
+				multiple: false,
+				namespace: "Steve",
+				appName: "Child SmartApp"
+			)
 			app(name: "appRequired", title: "required:true", required: true, multiple: false, namespace: "Steve", appName: "Child SmartApp")
 			app(name: "appComplete", title: "state:complete", required: false, multiple: false, namespace: "Steve", appName: "Child SmartApp", state: "complete")
 		}

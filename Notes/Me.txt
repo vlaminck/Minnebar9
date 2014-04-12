@@ -2,9 +2,9 @@
 
 
 			Steve Vlaminck
+
 			steve@smartthings.com
 			@bearduino
 
 			https://github.com/vlaminck/Minnebar9
-			git@github.com:vlaminck/Minnebar9.git
 
