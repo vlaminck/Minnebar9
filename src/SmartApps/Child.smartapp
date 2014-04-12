@@ -1,0 +1,94 @@
+/**
+ *  Child
+ *
+ *  Author: Steve Vlaminck
+ *  Date: 2014-04-12
+ */
+preferences {
+	page(name: "rootPage", install: true, uninstall: true) {
+		section {
+			paragraph "I'm a child app"
+		}
+	}
+}
+
+// ========================================================
+// Read
+// ========================================================
+
+def getFoo() {
+	return state.foo ?: "MinneBar9 FTW"
+}
+
+// ========================================================
+// Update
+// ========================================================
+
+def setFoo(newFoo) {
+	state.foo = newFoo
+}
+
+// ========================================================
+// Interact With Parent
+// ========================================================
+
+def getStoryFromParent() {
+	def parent = app.getParent()
+
+	return parent.getStory()
+}
+
+def setStoryOnParent(newStory) {
+	def parent = app.getParent()
+
+	return parent.setStory(newStory)
+}
+
+// ========================================================
+// Parent interaction
+// ========================================================
+
+def interactWithParent() {
+	def story = getStoryFromParent()
+
+	if (storyIsBoring(story)) {
+		def newStory = getBetterStory()
+		setStoryOnParent(newStory)
+	}
+}
+
+def storyIsBoring(story) {
+	return story == "Once upon a time..."
+}
+
+def getBetterStory() {
+	// TODO: something original ;)
+	return ""
+}
+
+// ========================================================
+// Handlers
+// ========================================================
+
+
+def installed() {
+	log.debug "Installed with settings: ${settings}"
+
+	initialize()
+
+	def parent = app.getParent()
+
+	parent.childInstallationFinished()
+
+}
+
+def updated() {
+	log.debug "Updated with settings: ${settings}"
+
+	unsubscribe()
+	initialize()
+}
+
+def initialize() {
+	// TODO: subscribe to attributes, devices, locations, etc.
+}

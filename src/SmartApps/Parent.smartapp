@@ -1,0 +1,157 @@
+/**
+ *  Parent
+ *
+ *  Author: Steve Vlaminck
+ *  Date: 2014-04-12
+ */
+
+// ========================================================
+// Create
+// ========================================================
+
+preferences {
+	page(name: "firstPage", install: true, uninstall: true) {
+		section {
+			// This will create Child SmartApps for you
+			app(
+				name: "childApp",
+				title: "Install a Child App",
+				required: false,
+				multiple: false,
+				namespace: "Minnebar9",
+				appName: "Child"
+			)
+		}
+	}
+}
+
+def createMyChildSmartApp(label) {
+	addChildApp(
+		"Minnebar9", // namespace
+		"Child", // smartAppVersionName
+		label,
+		[:] // properties
+	)
+}
+
+def createMyChildDevice(childDNI) {
+	def childDevice = addChildDevice(
+		"Minnebar9", // namespace
+		"ChildDevice", // DeviceType Name
+		childDNI, // deviceNetworkId
+		null, // hubId
+		[label: "Minnebar Rocks!"] // properties
+	)
+}
+
+// ========================================================
+// Read
+// ========================================================
+
+def getFooFromChildSmartApp(childName) {
+	def childSmartApp = findChildAppByName(childName)
+
+	return childSmartApp.getFoo()
+}
+
+def getFooFromAllChildSmartApps(name) {
+
+	if (name) {
+		return findAllChildAppsByName(name).collect { it.getFoo() }
+	}
+
+	return getChildApps().collect { it.getFoo() }
+}
+
+def getBarFromChildDevice(childDNI) {
+	def childDevice = getChildDevice(childDNI)
+
+	return childDevice.getBar()
+}
+
+def getBarFromAllChildDevices() {
+	return getChildDevices().collect { it.getBar() }
+}
+
+// ========================================================
+// Update
+// ========================================================
+
+def setFooOnChildSmartApp(childName, value) {
+	def childSmartApp = findChildAppByName(childName)
+
+	childSmartApp.setFoo(value)
+}
+
+def setFooOnAllChildSmartApps(name, value) {
+
+	if (name) {
+
+		findAllChildAppsByName(name).collect { it.setFoo(value) }
+
+	} else {
+
+		getChildApps().each { it.setFoo(value) }
+
+	}
+}
+
+def setBarOnChildDevice(childDNI, value) {
+	def childDevice = getChildDevice(childDNI)
+
+	childDevice.setBar(value)
+}
+
+def setBarOnAllChildDevices(value) {
+	getChildDevices().each { it.setBar(value) }
+}
+
+// ========================================================
+// Delete
+// ========================================================
+
+def deleteMyChildSmartApp(childLabel) {
+	deleteChildApp(childLabel)
+}
+
+def deleteMyChildDevice(childDNI) {
+	deleteChildDevice(childDNI)
+}
+
+// ========================================================
+// methods for children to use
+// ========================================================
+
+def getStory() {
+	return state.story ?: "Once upon a time..."
+}
+
+def setStory(newStory) {
+	state.story = newStory
+}
+
+def childInstallationFinished() {
+	createMyChildDevice("someDeviceNetworkIdentifier")
+	setBarOnAllChildDevices("WooHoo!")
+}
+
+// ========================================================
+// Handlers
+// ========================================================
+
+def installed() {
+	log.debug "Installed with settings: ${settings}"
+
+	initialize()
+}
+
+def updated() {
+	log.debug "Updated with settings: ${settings}"
+
+	unsubscribe()
+	initialize()
+}
+
+def initialize() {
+	// TODO: subscribe to attributes, devices, locations, etc.
+}
