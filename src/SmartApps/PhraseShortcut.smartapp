@@ -1,5 +1,3 @@
-class PhraseShortcut { // Remove this line before pasting into the SmartThings IDE
-
 /**
  *  Title: Phrase Shortcut
  * 	Description:
@@ -206,6 +204,3 @@ class PhraseShortcut { // Remove this line before pasting into the SmartThings I
 	}
 
 // TODO: implement event handlers
-
-
-} // Remove this line before pasting into the SmartThings IDE
