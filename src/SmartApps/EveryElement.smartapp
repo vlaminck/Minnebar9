@@ -4,6 +4,17 @@
  *  Author: steve
  *  Date: 2013-11-22
  */
+
+// Automatically generated. Make future change here.
+definition(
+    name: "Every Element",
+    namespace: "Minnebar9",
+    author: "Steve Vlaminck",
+    description: "Every Element",
+    iconUrl: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience.png",
+    iconX2Url: "https://s3.amazonaws.com/smartapp-icons/Convenience/Cat-Convenience%402x.png"
+)
+
 preferences {
 	page(name: "firstPage")
 	page(name: "inputPage")
